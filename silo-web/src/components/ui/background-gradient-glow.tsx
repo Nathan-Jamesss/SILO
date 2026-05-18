@@ -1,4 +1,3 @@
-import { cn } from "../../lib/utils";
 import { useState } from "react";
 
 export const Component = () => {
@@ -6,7 +5,7 @@ export const Component = () => {
 
   return (
     <div 
-      className={cn("absolute inset-0 w-full h-full -z-20")} 
+      className="absolute inset-0 w-full h-full -z-20" 
       onClick={() => setCount(prev => prev + 1)}
       data-count={count}
       style={{
