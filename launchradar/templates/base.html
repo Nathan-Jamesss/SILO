@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SILO{% endblock %}</title>
+    <!-- Premium Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        beige: {
+                            50: '#fdfbf7',   // warm off-white
+                            100: '#f5efe6',  // cream
+                            200: '#eadecc',  // warm beige outline
+                            300: '#d2b48c',  // muted tan
+                        },
+                        coffee: {
+                            500: '#8c6239',
+                            600: '#6f4e37',  // primary coffee brown
+                            700: '#5a3d2a',
+                            800: '#3c2f2f',  // primary dark espresso
+                            900: '#1e110e',  // deep text dark espresso
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="/static/custom.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: 
+                radial-gradient(ellipse 85% 65% at 8% 8%, rgba(160, 120, 90, 0.58), transparent 60%),
+                radial-gradient(ellipse 75% 60% at 75% 35%, rgba(210, 180, 140, 0.68), transparent 62%),
+                radial-gradient(ellipse 70% 60% at 15% 80%, rgba(111, 78, 55, 0.52), transparent 62%),
+                radial-gradient(ellipse 70% 60% at 92% 92%, rgba(90, 61, 42, 0.42), transparent 62%),
+                linear-gradient(180deg, #fdfbf7 0%, #eadecc 100%) !important;
+            background-attachment: fixed !important;
+            color: var(--color-text) !important;
+        }
+        .font-outfit {
+            font-family: 'Outfit', sans-serif;
+        }
+        /* Custom animated radar sweep in coffee theme */
+        @keyframes sweep {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .radar-sweep {
+            animation: sweep 4s linear infinite;
+            transform-origin: 16px 16px;
+        }
+        @keyframes ping-slow {
+            0% { transform: scale(1); opacity: 1; }
+            70%, 100% { transform: scale(2.5); opacity: 0; }
+        }
+        .ping-circle {
+            animation: ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        /* Elegant coffee card and panel styles */
+        .glass-panel {
+            background: rgba(245, 239, 230, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .glass-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 10px 25px rgba(111, 78, 55, 0.08);
+            transform: translateY(-2px);
+        }
+        /* Hide scrollbars but keep functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-coffee-600/20 selection:text-coffee-800" x-data="{ showDrawer: false }">
+
+    <!-- Top Glow Header -->
+    <header class="sticky top-0 z-40 w-full glass-panel shadow-sm">
+        <div class="max-w-[90rem] mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+            
+            <!-- Bespoke Brand Logo with Elegant SILO style (No S logo block, Playfair Display) -->
+            <a href="/" class="flex items-center gap-2.5 group">
+                <div>
+                    <h1 class="text-2xl font-light tracking-[0.05em] text-coffee-800 group-hover:opacity-90 transition-opacity" style="font-family: 'Playfair Display', serif;">
+                        SILO
+                    </h1>
+                    <p class="text-[8px] text-[#6f4e37] font-bold uppercase tracking-[0.18em] -mt-0.5 hidden sm:block">
+                        Startup Intelligence for Launch & Outreach
+                    </p>
+                </div>
+            </a>
+
+            <!-- Navigation Actions & Active Status Rings -->
+            <div class="flex items-center gap-6">
+                <div class="flex items-center gap-4 text-sm font-medium">
+                    <!-- Past Projects Trigger -->
+                    <button @click="showDrawer = true" 
+                            class="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-beige-200 bg-beige-100 hover:bg-beige-200 text-coffee-600 hover:text-coffee-800 transition-all">
+                        Past Projects
+                        {% if all_projects %}
+                        <span class="absolute -top-1.5 -right-1.5 bg-coffee-600 text-white font-bold text-[9px] w-4 h-4 flex items-center justify-center rounded-full shadow-sm">
+                            {{ all_projects|length }}
+                        </span>
+                        {% endif %}
+                    </button>
+
+                    <!-- Export Trigger -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" @click.outside="open = false" 
+                                class="bg-coffee-600 hover:bg-coffee-700 text-white px-3.5 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1">
+                            Export
+                        </button>
+                        <div x-show="open" style="display: none;" 
+                             class="absolute right-0 mt-2 w-36 bg-white rounded-lg shadow-xl border border-beige-200 py-1.5 z-50 text-coffee-900">
+                            <a href="/api/export/csv?{{ request.query_params }}" class="block px-4 py-2 hover:bg-beige-100 text-xs font-semibold hover:text-coffee-600 transition-colors">Export CSV</a>
+                            <a href="/api/export/json?{{ request.query_params }}" class="block px-4 py-2 hover:bg-beige-100 text-xs font-semibold hover:text-coffee-600 transition-colors">Export JSON</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Interactive Past Projects Panel Drawer (Alpine.js) -->
+    <div x-show="showDrawer" style="display: none;" class="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 overflow-hidden">
+            <!-- Backdrop -->
+            <div @click="showDrawer = false" class="absolute inset-0 bg-coffee-900/10 backdrop-blur-sm transition-opacity" aria-hidden="true"></div>
+
+            <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+                <!-- Slide-over panel -->
+                <div x-show="showDrawer" 
+                     x-transition:enter="transform transition ease-in-out duration-300"
+                     x-transition:enter-start="translate-x-full"
+                     x-transition:enter-end="translate-x-0"
+                     x-transition:leave="transform transition ease-in-out duration-300"
+                     x-transition:leave-start="translate-x-0"
+                     x-transition:leave-end="translate-x-full"
+                     class="pointer-events-auto w-screen max-w-md">
+                    <div class="flex h-full flex-col bg-beige-50 border-l border-beige-200 shadow-2xl">
+                        <!-- Drawer Header -->
+                        <div class="px-6 py-5 bg-beige-100/50 border-b border-beige-200 flex items-center justify-between">
+                            <div>
+                                <h2 class="text-lg font-bold font-outfit text-coffee-600" id="slide-over-title">Past Projects Portal</h2>
+                                <p class="text-xs text-coffee-900/60">Add past projects to trigger AI compatibility matching scorecards.</p>
+                            </div>
+                            <button @click="showDrawer = false" class="text-coffee-500 hover:text-coffee-800">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Drawer Content / Form & List -->
+                        <div class="flex-1 overflow-y-auto px-6 py-6 no-scrollbar" x-data="{
+                            projTitle: '',
+                            projTech: '',
+                            projSummary: '',
+                            isLoading: false,
+                            statusMsg: '',
+                            async submitProject() {
+                                if (!this.projTitle || !this.projSummary) {
+                                    this.statusMsg = 'Title and summary are required.';
+                                    return;
+                                }
+                                this.isLoading = true;
+                                this.statusMsg = 'Uploading and matching...';
+                                try {
+                                    const resp = await fetch('/api/projects', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            title: this.projTitle,
+                                            technologies: this.projTech,
+                                            summary: this.projSummary
+                                        })
+                                    });
+                                    const res = await resp.json();
+                                    if (res.status === 'success') {
+                                        this.statusMsg = 'Successfully matched! Reloading...';
+                                        setTimeout(() => {
+                                            window.location.reload();
+                                        }, 1000);
+                                    } else {
+                                        this.statusMsg = 'Failed: ' + (res.message || 'Error');
+                                    }
+                                } catch (e) {
+                                    this.statusMsg = 'Network error';
+                                } finally {
+                                    this.isLoading = false;
+                                }
+                            },
+                            async deleteProject(id) {
+                                if(!confirm('Are you sure you want to delete this project?')) return;
+                                try {
+                                    const resp = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+                                    const res = await resp.json();
+                                    if (res.status === 'success') {
+                                        window.location.reload();
+                                    }
+                                } catch (e) {
+                                    alert('Failed to delete project');
+                                }
+                            }
+                        }">
+                            
+                            <!-- Add Project Card Form -->
+                            <div class="p-4 rounded-xl bg-beige-100/40 border border-beige-200 mb-6">
+                                <h3 class="text-sm font-bold font-outfit text-coffee-600 mb-3">Register Past Project</h3>
+                                <div class="space-y-3.5">
+                                    <div>
+                                        <label class="block text-[10px] text-coffee-600 font-bold uppercase tracking-wider mb-1">Project Title</label>
+                                        <input type="text" x-model="projTitle" placeholder="e.g. HealthTracker Mobile" 
+                                               class="w-full text-sm bg-white border border-beige-200 rounded-lg px-3 py-2 text-coffee-900 focus:outline-none focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-coffee-600 font-bold uppercase tracking-wider mb-1">Tech Stack</label>
+                                        <input type="text" x-model="projTech" placeholder="e.g. React Native, FastAPI, PostgreSQL" 
+                                               class="w-full text-sm bg-white border border-beige-200 rounded-lg px-3 py-2 text-coffee-900 focus:outline-none focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] text-coffee-600 font-bold uppercase tracking-wider mb-1">Problem Statement & Summary</label>
+                                        <textarea x-model="projSummary" rows="3" placeholder="Explain what problem your project solves and its core features..." 
+                                                  class="w-full text-sm bg-white border border-beige-200 rounded-lg px-3 py-2 text-coffee-900 focus:outline-none focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600"></textarea>
+                                    </div>
+
+                                    <button @click="submitProject()" :disabled="isLoading" 
+                                            class="w-full py-2 bg-coffee-600 hover:bg-coffee-500 text-white font-bold text-sm rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                                        <span x-show="!isLoading">Register and Run AI Match</span>
+                                        <span x-show="isLoading" class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span>
+                                        <span x-show="isLoading">AI Matching Engine Active...</span>
+                                    </button>
+
+                                    <div x-show="statusMsg" x-text="statusMsg" class="text-xs font-semibold text-center mt-2 text-coffee-600"></div>
+                                </div>
+                            </div>
+
+                            <!-- Registered Projects List -->
+                            <h3 class="text-sm font-bold font-outfit text-coffee-600 mb-3 border-b border-beige-200 pb-1.5">Registered Projects</h3>
+                            <div class="space-y-3">
+                                {% if all_projects %}
+                                    {% for proj in all_projects %}
+                                    <div class="p-3.5 rounded-lg bg-white border border-beige-200 hover:border-beige-300 transition-colors group relative">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <h4 class="text-sm font-bold text-coffee-800">{{ proj.title }}</h4>
+                                                <div class="flex flex-wrap gap-1 mt-1">
+                                                    {% for tech in proj.technologies.split(',') %}
+                                                        <span class="text-[9px] font-semibold bg-beige-100 text-coffee-600 px-1.5 py-0.5 rounded">{{ tech.strip() }}</span>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- Delete project button -->
+                                            <button @click="deleteProject({{ proj.id }})" 
+                                                    class="text-coffee-500 hover:text-red-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p class="text-xs text-coffee-600 mt-2 line-clamp-2">{{ proj.summary }}</p>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-xs text-coffee-500 text-center py-4">No past projects added yet. Upload one above to unlock matching scorecards.</p>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-[90rem] mx-auto px-4 sm:px-6 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-beige-200 mt-16 py-8 text-center text-coffee-600/70 text-xs">
+        SILO — Last scraped: {{ stats.last_scraped if stats else "Never" }} · Powered by Generative AI
+    </footer>
+
+    <!-- ── SAILO Bot AI Chat Assistant Panel ─────────────────────────────────── -->
+    <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end" x-data="{ 
+        open: false, 
+        inputMsg: '', 
+        messages: [
+            { sender: 'bot', text: 'Hello founder! I am **SAILO Bot**, your personal startup mentor. Ask me anything about how/when to secure government or private grants, entity registration workflows, pitch structures, or milestone planning!' }
+        ], 
+        isSending: false,
+        sendQuickMessage(txt) {
+            this.inputMsg = txt;
+            this.sendMessage();
+        },
+        sendMessage() {
+            if (!this.inputMsg || !this.inputMsg.trim()) return;
+            const userText = this.inputMsg.trim();
+            this.messages.push({ sender: 'user', text: userText });
+            this.inputMsg = '';
+            this.isSending = true;
+            
+            // Scroll message container down after Alpine reactive update
+            this.$nextTick(() => {
+                const container = this.$refs.chatContainer;
+                container.scrollTop = container.scrollHeight;
+            });
+
+            fetch('/api/sailo-bot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: userText })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.isSending = false;
+                this.messages.push({ sender: 'bot', text: data.response });
+                this.$nextTick(() => {
+                    const container = this.$refs.chatContainer;
+                    container.scrollTop = container.scrollHeight;
+                });
+            })
+            .catch(err => {
+                this.isSending = false;
+                this.messages.push({ sender: 'bot', text: 'I hit a network error. Please try again in a bit!' });
+            });
+        }
+    }">
+        
+        <!-- Toggle Button Shimmering Coffee circle with dynamic pulse -->
+        <button type="button" @click="open = !open" 
+                class="w-14 h-14 bg-gradient-to-tr from-[#3c2f2f] to-[#6f4e37] hover:from-[#5a3d2a] hover:to-[#8c6239] text-[#fdfbf7] rounded-full flex items-center justify-center shadow-xl hover:scale-105 active:scale-95 transition-all duration-300 relative group cursor-pointer focus:outline-none">
+            <span class="absolute inset-0 rounded-full bg-[#6f4e37]/20 animate-ping group-hover:animate-none pointer-events-none"></span>
+            <!-- Message Icon -->
+            <svg class="w-6 h-6 transform group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+            </svg>
+            <!-- Badge -->
+            <span class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+        </button>
+
+        <!-- Glassmorphic Chat Window -->
+        <div x-show="open" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 translate-y-10 scale-95"
+             x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+             x-transition:leave-end="opacity-0 translate-y-10 scale-95"
+             class="absolute bottom-16 right-0 w-[22rem] sm:w-[24rem] h-[500px] rounded-[2rem] shadow-2xl flex flex-col overflow-hidden border border-white/40 bg-white/20 backdrop-blur-2xl" 
+             style="display: none;">
+            
+            <!-- Sleek Header with Elegant Serif and status badge -->
+            <div class="px-5 py-4 bg-gradient-to-b from-white/30 to-transparent border-b border-white/30 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#3c2f2f] to-[#6f4e37] flex items-center justify-center text-[#fdfbf7] font-bold text-sm shadow-md">
+                        S
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-bold tracking-wider text-coffee-800 uppercase" style="font-family: 'Playfair Display', serif;">
+                            SAILO Bot
+                        </h4>
+                        <span class="text-[9px] text-[#6f4e37]/75 font-semibold flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                            AI Startup Mentor Active
+                        </span>
+                    </div>
+                </div>
+                <!-- Close Button -->
+                <button type="button" @click="open = false" class="text-coffee-600 hover:text-coffee-900 transition-colors p-1.5 rounded-lg hover:bg-white/20 focus:outline-none">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Messages Timeline Container -->
+            <div x-ref="chatContainer" class="flex-grow overflow-y-auto px-5 py-4 flex flex-col gap-3.5 scrollbar-thin">
+                <template x-for="(msg, index) in messages" :key="index">
+                    <div :class="msg.sender === 'user' ? 'self-end items-end' : 'self-start items-start'" class="flex flex-col max-w-[85%]">
+                        <!-- Message Bubble -->
+                        <div :class="msg.sender === 'user' ? 'bg-[#3c2f2f] text-[#fdfbf7] rounded-2xl rounded-tr-none shadow-md' : 'bg-white/40 backdrop-blur-md text-coffee-950 border border-white/40 rounded-2xl rounded-tl-none shadow-sm'" 
+                             class="px-4 py-2.5 text-[11px] leading-relaxed prose prose-sm max-w-none">
+                            <p x-html="msg.text.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')"></p>
+                        </div>
+                        <!-- Meta timestamp -->
+                        <span class="text-[8px] text-coffee-600/60 font-semibold mt-1 uppercase tracking-wider" x-text="msg.sender === 'user' ? 'Founder' : 'SAILO Bot'"></span>
+                    </div>
+                </template>
+                
+                <!-- Typing/Sending Indicator -->
+                <div x-show="isSending" class="self-start flex flex-col max-w-[85%] animate-pulse">
+                    <div class="px-4 py-3 bg-white/40 border border-white/40 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 bg-coffee-600 rounded-full animate-bounce"></span>
+                        <span class="w-1.5 h-1.5 bg-coffee-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                        <span class="w-1.5 h-1.5 bg-coffee-600 rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pre-populated Quick Prompts -->
+            <div class="px-4 py-2 bg-white/10 border-t border-white/20 flex flex-wrap gap-1.5 justify-start">
+                <button type="button" @click="sendQuickMessage('How do I apply for MSME grants?')" 
+                        class="text-[9px] font-bold px-2.5 py-1 bg-white/50 hover:bg-white/80 border border-white/40 text-coffee-700 hover:text-coffee-950 rounded-lg transition-colors cursor-pointer focus:outline-none">
+                    MSME Grants?
+                </button>
+                <button type="button" @click="sendQuickMessage('What is the registration workflow?')" 
+                        class="text-[9px] font-bold px-2.5 py-1 bg-white/50 hover:bg-white/80 border border-white/40 text-coffee-700 hover:text-coffee-950 rounded-lg transition-colors cursor-pointer focus:outline-none">
+                    Registration?
+                </button>
+                <button type="button" @click="sendQuickMessage('When should I pitch private grants?')" 
+                        class="text-[9px] font-bold px-2.5 py-1 bg-white/50 hover:bg-white/80 border border-white/40 text-coffee-700 hover:text-coffee-950 rounded-lg transition-colors cursor-pointer focus:outline-none">
+                    Pitching?
+                </button>
+            </div>
+
+            <!-- Input bar -->
+            <div class="px-4 py-3 bg-gradient-to-t from-white/30 to-transparent border-t border-white/30">
+                <form @submit.prevent="sendMessage()" class="flex gap-2">
+                    <input type="text" placeholder="Ask SAILO Bot how to navigate grants..." x-model="inputMsg" :disabled="isSending"
+                           class="block w-full px-3.5 py-2 text-xs bg-white/50 backdrop-blur-md border border-white/40 rounded-xl text-coffee-900 focus:outline-none focus:border-coffee-600 placeholder-coffee-600/50">
+                    <button type="submit" :disabled="isSending"
+                            class="p-2 bg-[#3c2f2f] hover:bg-[#5a3d2a] text-[#fdfbf7] rounded-xl transition-all shadow-md flex items-center justify-center cursor-pointer focus:outline-none">
+                        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<!-- Dashboard Hero & Quick Stats Console -->
+<div class="mb-8 p-6 rounded-2xl glass-panel-heavy relative overflow-hidden shadow-sm">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
+        <div>
+            <h2 class="text-2xl font-extrabold font-outfit text-coffee-900 tracking-tight">Intelligence Dashboard</h2>
+            <p class="text-sm text-coffee-600 mt-1">Aggregating global competitive opportunities and evaluating them against your developer footprint.</p>
+        </div>
+        
+        <!-- Premium Glass Stats Badges -->
+        <div class="flex flex-wrap gap-4 text-xs font-semibold">
+            <div class="px-4 py-3 rounded-xl stats-badge-glass flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-coffee-600"></span>
+                <div>
+                    <div class="text-[10px] text-coffee-600 font-bold uppercase tracking-wider">Active Opportunities</div>
+                    <div class="text-base font-extrabold text-coffee-900 mt-0.5">{{ stats.total_active }}</div>
+                </div>
+            </div>
+            {% if stats.expiring_soon > 0 %}
+            <div class="px-4 py-3 rounded-xl stats-badge-glass flex items-center gap-3">
+                <span class="w-2.5 h-2.5 rounded-full bg-coffee-600 animate-pulse"></span>
+                <div>
+                    <div class="text-[10px] text-coffee-600 font-bold uppercase tracking-wider">Expiring Soon</div>
+                    <div class="text-base font-extrabold text-coffee-900 mt-0.5">{{ stats.expiring_soon }} <span class="text-xs text-coffee-600 font-normal">(&lt; 7d)</span></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Premium Search, Filters, and Compatibility Selection Console -->
+<form method="GET" action="/" class="mb-8 space-y-4">
+    <!-- Main Search & Past Project Matching Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+        <!-- Search bar -->
+        <div class="relative lg:col-span-6">
+            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                <svg class="h-4 w-4 text-coffee-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <input type="text" name="q" value="{{ q }}" placeholder="Search competitions, hackathons, organizers, tech stack..." 
+                   class="block w-full pl-10 pr-3 py-2.5 text-sm input-glass rounded-xl leading-5 text-coffee-900 placeholder-coffee-600/50 focus:outline-none focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600 shadow-sm transition-colors">
+        </div>
+
+        <!-- Project compatibility selector -->
+        <div class="lg:col-span-6 relative flex items-center gap-2">
+            <div class="w-full relative">
+                <select name="selected_project_id" onchange="this.form.submit()" 
+                        class="block w-full pl-4 pr-10 py-2.5 text-sm input-glass rounded-xl text-coffee-600 font-semibold focus:outline-none focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600 appearance-none shadow-sm cursor-pointer">
+                    <option value="0" class="text-coffee-600 font-normal">Select past project to run AI compatibility matching...</option>
+                    {% for proj in all_projects %}
+                    <option value="{{ proj.id }}" class="text-coffee-800 font-semibold" {% if selected_project_id == proj.id %}selected{% endif %}>
+                        Active: {{ proj.title }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-coffee-600">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
+            
+            <button type="button" @click="showDrawer = true" 
+                    class="px-3.5 py-2.5 bg-[#3c2f2f] hover:bg-[#5a3d2a] text-[#fdfbf7] rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-md cursor-pointer focus:outline-none">
+                + Register Project
+            </button>
+        </div>
+    </div>
+
+    <!-- Advanced Filter & Sort Selectors Row -->
+    <div class="flex flex-wrap items-center gap-3.5 pt-1">
+        <!-- Type Select -->
+        <select name="type_filter" onchange="this.form.submit()" 
+                class="block w-full sm:w-auto pl-3 pr-10 py-2.5 text-xs input-glass rounded-xl text-coffee-800 focus:outline-none focus:border-coffee-600 appearance-none shadow-sm cursor-pointer">
+            <option value="">All Types</option>
+            <option value="Grant" {% if type_filter == 'Grant' %}selected{% endif %}>Grants</option>
+            <option value="Accelerator" {% if type_filter == 'Accelerator' %}selected{% endif %}>Accelerators</option>
+            <option value="Conference" {% if type_filter == 'Conference' %}selected{% endif %}>Conferences</option>
+            <option value="Competition" {% if type_filter == 'Competition' %}selected{% endif %}>Competitions</option>
+            <option value="Fellowship" {% if type_filter == 'Fellowship' %}selected{% endif %}>Fellowships</option>
+        </select>
+
+        <!-- Source Select (8 Total Sources) -->
+        <select name="source" onchange="this.form.submit()" 
+                class="block w-full sm:w-auto pl-3 pr-10 py-2.5 text-xs input-glass rounded-xl text-coffee-800 focus:outline-none focus:border-coffee-600 appearance-none shadow-sm cursor-pointer">
+            <option value="">All 8 Sources</option>
+            <option value="Grants">Grants</option>
+            <option value="Devpost" {% if source_filter == 'Devpost' %}selected{% endif %}>Devpost</option>
+            <option value="Devfolio" {% if source_filter == 'Devfolio' %}selected{% endif %}>Devfolio</option>
+            <option value="Unstop" {% if source_filter == 'Unstop' %}selected{% endif %}>Unstop</option>
+            <option value="Hack2Skill" {% if source_filter == 'Hack2Skill' %}selected{% endif %}>Hack2Skill</option>
+            <option value="F6S" {% if source_filter == 'F6S' %}selected{% endif %}>F6S</option>
+            <option value="Eventbrite" {% if source_filter == 'Eventbrite' %}selected{% endif %}>Eventbrite</option>
+            <option value="Graham & Walker" {% if source_filter == 'Graham & Walker' %}selected{% endif %}>Graham & Walker</option>
+            <option value="MassChallenge" {% if source_filter == 'MassChallenge' %}selected{% endif %}>MassChallenge</option>
+        </select>
+
+        <!-- Deadline Select -->
+        <select name="deadline" onchange="this.form.submit()" 
+                class="block w-full sm:w-auto pl-3 pr-10 py-2.5 text-xs input-glass rounded-xl text-coffee-800 focus:outline-none focus:border-coffee-600 appearance-none shadow-sm cursor-pointer">
+            <option value="">Any Deadline</option>
+            <option value="this_week" {% if deadline_filter == 'this_week' %}selected{% endif %}>Next 7 Days</option>
+            <option value="this_month" {% if deadline_filter == 'this_month' %}selected{% endif %}>Next 30 Days</option>
+            <option value="next_3_months" {% if deadline_filter == 'next_3_months' %}selected{% endif %}>Next 90 Days</option>
+        </select>
+
+        <!-- Sector / Domain Filter -->
+        <select name="sector" onchange="this.form.submit()" 
+                class="block w-full sm:w-auto pl-3 pr-10 py-2.5 text-xs input-glass rounded-xl text-coffee-800 focus:outline-none focus:border-coffee-600 appearance-none shadow-sm cursor-pointer">
+            <option value="">All Sectors</option>
+            <option value="AI / ML" {% if sector_filter == 'AI / ML' %}selected{% endif %}>AI / ML</option>
+            <option value="FinTech" {% if sector_filter == 'FinTech' %}selected{% endif %}>FinTech</option>
+            <option value="HealthTech" {% if sector_filter == 'HealthTech' %}selected{% endif %}>HealthTech</option>
+            <option value="AgriTech" {% if sector_filter == 'AgriTech' %}selected{% endif %}>AgriTech</option>
+            <option value="EdTech" {% if sector_filter == 'EdTech' %}selected{% endif %}>EdTech</option>
+            <option value="CleanTech" {% if sector_filter == 'CleanTech' %}selected{% endif %}>CleanTech</option>
+            <option value="Web3" {% if sector_filter == 'Web3' %}selected{% endif %}>Web3 / Blockchain</option>
+            <option value="SaaS" {% if sector_filter == 'SaaS' %}selected{% endif %}>SaaS / Enterprise</option>
+            <option value="Hardware" {% if sector_filter == 'Hardware' %}selected{% endif %}>Hardware / IoT</option>
+            <option value="General" {% if sector_filter == 'General' %}selected{% endif %}>General / Open</option>
+        </select>
+
+        <div class="flex-grow"></div>
+
+        <!-- Dynamic Sorting Selector -->
+        <select name="sort" onchange="this.form.submit()" 
+                class="block w-full sm:w-auto pl-3 pr-10 py-2.5 text-xs input-glass rounded-xl text-coffee-600 font-bold focus:outline-none focus:border-coffee-600 appearance-none shadow-sm cursor-pointer">
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Sort: Newest First</option>
+            <option value="deadline_asc" {% if sort == 'deadline_asc' %}selected{% endif %}>Sort: Deadline Soonest</option>
+            <option value="prize_desc" {% if sort == 'prize_desc' %}selected{% endif %}>Sort: Highest Prize Pool</option>
+            <option value="applicants_desc" {% if sort == 'applicants_desc' %}selected{% endif %}>Sort: Most Applicants</option>
+            {% if selected_project_id > 0 %}
+            <option value="compatibility_desc" {% if sort == 'compatibility_desc' %}selected{% endif %}>Sort: Compatibility Score</option>
+            {% endif %}
+        </select>
+    </div>
+</form>
+
+<!-- Active Filters / Clean reset Tags -->
+<div class="mb-6 flex flex-wrap gap-2 items-center text-xs">
+    {% if q or type_filter or source_filter or deadline_filter or stage_filter or sector_filter or selected_project_id > 0 %}
+        <span class="text-coffee-600 font-semibold uppercase tracking-wider mr-1.5 text-[10px]">Active Filters:</span>
+        
+        {% if q %}
+        <a href="{{ url_with('q', '') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold bg-beige-100 text-coffee-700 border border-beige-200 hover:border-beige-300 transition-colors">
+            Search: "{{ q }}" <span class="text-coffee-500 font-normal">x</span>
+        </a>
+        {% endif %}
+        
+        {% if selected_project_id > 0 %}
+        <a href="{{ url_with('selected_project_id', '') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold bg-beige-100 text-coffee-700 border border-beige-200 hover:border-beige-300 transition-colors">
+            Matched Project Active <span class="text-coffee-500 font-normal">x</span>
+        </a>
+        {% endif %}
+
+        {% if type_filter %}
+        <a href="{{ url_with('type_filter', '') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold bg-beige-100 text-coffee-700 border border-beige-200 hover:border-beige-300 transition-colors">
+            Type: {{ type_filter }} <span class="text-coffee-500 font-normal">x</span>
+        </a>
+        {% endif %}
+        
+        {% if source_filter %}
+        <a href="{{ url_with('source', '') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold bg-beige-100 text-coffee-700 border border-beige-200 hover:border-beige-300 transition-colors">
+            Source: {{ source_filter }} <span class="text-coffee-500 font-normal">x</span>
+        </a>
+        {% endif %}
+        
+        {% if deadline_filter %}
+        <a href="{{ url_with('deadline', '') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold bg-beige-100 text-coffee-700 border border-beige-200 hover:border-beige-300 transition-colors">
+            Deadline: {{ deadline_filter|replace('_', ' ')|title }} <span class="text-coffee-500 font-normal">x</span>
+        </a>
+        {% endif %}
+
+        {% if stage_filter %}
+        <a href="{{ url_with('stage', '') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold bg-beige-100 text-coffee-700 border border-beige-200 hover:border-beige-300 transition-colors">
+            Stage: {{ stage_filter }} <span class="text-coffee-500 font-normal">x</span>
+        </a>
+        {% endif %}
+
+        {% if sector_filter %}
+        <a href="{{ url_with('sector', '') }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold bg-beige-100 text-coffee-700 border border-beige-200 hover:border-beige-300 transition-colors">
+            Sector: {{ sector_filter }} <span class="text-coffee-500 font-normal">x</span>
+        </a>
+        {% endif %}
+
+        <a href="/" class="text-coffee-600 hover:text-coffee-800 ml-2 font-bold hover:underline transition-colors">Clear all</a>
+    {% endif %}
+</div>
+
+<!-- Results Summary Label -->
+<div class="mb-6 text-coffee-600 text-xs font-semibold uppercase tracking-wider flex items-center justify-between">
+    <div>
+        Showing <span class="font-extrabold text-coffee-800">{{ opportunities|length }}</span> of <span class="font-extrabold text-coffee-800">{{ total }}</span> Opportunities
+    </div>
+    {% if selected_project_id > 0 %}
+    <div class="text-coffee-700 text-[10px] flex items-center gap-1">
+        AI Compatibility Scoring Active
+    </div>
+    {% endif %}
+</div>
+
+<!-- Opportunities Grid -->
+{% if opportunities %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for opp in opportunities %}
+            {% include "partials/card.html" %}
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-24 rounded-2xl bg-beige-100 border border-beige-200 border-dashed max-w-lg mx-auto">
+        <h3 class="text-lg font-bold font-outfit text-coffee-800">No opportunities found</h3>
+        <p class="mt-2 text-sm text-coffee-600">We scanned the horizon but found no matches. Adjust your filters or reset tags below.</p>
+        <a href="/" class="mt-5 inline-block px-4 py-2 bg-coffee-600 hover:bg-coffee-500 text-white font-bold text-sm rounded-xl transition-all shadow-sm">
+            Reset All Filters
+        </a>
+    </div>
+{% endif %}
+
+<!-- Pagination Section -->
+{% if total_pages > 1 %}
+<div class="mt-12 flex items-center justify-center gap-4">
+    {% if page > 1 %}
+        <a href="{{ url_with('page', page - 1) }}" class="px-4 py-2 border border-beige-200 rounded-xl text-xs font-bold text-coffee-700 bg-white hover:bg-beige-100 transition-colors">
+            Previous Page
+        </a>
+    {% else %}
+        <button disabled class="px-4 py-2 border border-beige-200 rounded-xl text-xs font-bold text-coffee-400 bg-beige-100 cursor-not-allowed">
+            Previous Page
+        </button>
+    {% endif %}
+    
+    <span class="text-xs font-bold text-coffee-600">Page {{ page }} of {{ total_pages }}</span>
+    
+    {% if page < total_pages %}
+        <a href="{{ url_with('page', page + 1) }}" class="px-4 py-2 border border-beige-200 rounded-xl text-xs font-bold text-coffee-700 bg-white hover:bg-beige-100 transition-colors">
+            Next Page
+        </a>
+    {% else %}
+        <button disabled class="px-4 py-2 border border-beige-200 rounded-xl text-xs font-bold text-coffee-400 bg-beige-100 cursor-not-allowed">
+            Next Page
+        </button>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

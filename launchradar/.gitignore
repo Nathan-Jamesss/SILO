@@ -1,0 +1,10 @@
+.env
+*.db
+__pycache__/
+.pytest_cache/
+.playwright/
+node_modules/
+*.pyc
+.DS_Store
+venv/
+.venv/

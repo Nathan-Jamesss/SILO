@@ -1,0 +1,175 @@
+:root {
+    --bg-base: #eadecc;           /* Warm beige background */
+    --bg-panel: #f5efe6;          /* Cream */
+    --bg-card: rgba(255, 255, 255, 0.28); /* Translucent glass card face */
+    --color-primary: #6f4e37;      /* Coffee brown */
+    --color-primary-dark: #3c2f2f; /* Espresso dark */
+    --color-accent: #d2b48c;       /* Muted tan */
+    --color-text: #1e110e;         /* Deep dark espresso */
+    --color-text-muted: #5a463a;   /* Muted coffee brown */
+    --border-color: rgba(255, 255, 255, 0.5); /* Warm beige border */
+}
+
+body {
+    background: 
+        radial-gradient(ellipse 85% 65% at 8% 8%, rgba(160, 120, 90, 0.58), transparent 60%),
+        radial-gradient(ellipse 75% 60% at 75% 35%, rgba(210, 180, 140, 0.68), transparent 62%),
+        radial-gradient(ellipse 70% 60% at 15% 80%, rgba(111, 78, 55, 0.52), transparent 62%),
+        radial-gradient(ellipse 70% 60% at 92% 92%, rgba(90, 61, 42, 0.42), transparent 62%),
+        linear-gradient(180deg, #fdfbf7 0%, #eadecc 100%) !important;
+    background-attachment: fixed !important;
+    color: var(--color-text) !important;
+}
+
+/* 3-line clamp for card descriptions */
+.description-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* 2-line clamp for card titles */
+.title-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Smooth card hover lift & Frosted Glassmorphic effect (No Glow Outlines) */
+.opportunity-card {
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+    background-color: rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.2), 0 8px 32px rgba(60, 47, 47, 0.04);
+}
+
+.opportunity-card:hover {
+    transform: translateY(-6px);
+    background-color: rgba(255, 255, 255, 0.45) !important;
+    border-color: rgba(111, 78, 55, 0.4) !important;
+    box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.25), 0 16px 36px rgba(111, 78, 55, 0.12);
+}
+
+/* Global Console Panels & Stats Glassmorphism */
+.glass-panel-heavy {
+    background: rgba(255, 255, 255, 0.28) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.2), 0 8px 32px rgba(60, 47, 47, 0.05) !important;
+}
+
+.stats-badge-glass {
+    background: rgba(255, 255, 255, 0.32) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.15) !important;
+    transition: all 0.3s ease;
+}
+.stats-badge-glass:hover {
+    background: rgba(255, 255, 255, 0.48) !important;
+    transform: translateY(-1px);
+    box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.25), 0 4px 12px rgba(111, 78, 55, 0.08) !important;
+}
+
+.input-glass {
+    background: rgba(255, 255, 255, 0.32) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.45) !important;
+    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.1) !important;
+    transition: all 0.3s ease !important;
+}
+.input-glass:focus {
+    background: rgba(255, 255, 255, 0.48) !important;
+    border-color: rgba(111, 78, 55, 0.6) !important;
+    box-shadow: inset 0 0 6px rgba(255, 255, 255, 0.15), 0 0 0 2px rgba(111, 78, 55, 0.15) !important;
+}
+
+
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-panel); }
+::-webkit-scrollbar-thumb { background: var(--color-accent); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+/* ── Type Badges ────────────────────────────────────────────────────────────
+   Each badge has a distinct visual weight within the Beige & Coffee palette.
+   All base styles are shared; only background/text/border differ per type.
+   ─────────────────────────────────────────────────────────────────────────── */
+[class^="type-badge-"] {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+
+/* Grant — solid espresso, near-white text (highest authority) */
+.type-badge-grant {
+    background-color: #3c2f2f;
+    color: #fdfbf7;
+    border-color: #3c2f2f;
+}
+
+/* Accelerator — solid coffee brown, cream text */
+.type-badge-accelerator {
+    background-color: #6f4e37;
+    color: #f5efe6;
+    border-color: #5a3e2b;
+}
+
+/* Conference — warm tan fill, dark espresso text */
+.type-badge-conference {
+    background-color: #c8a882;
+    color: #1e110e;
+    border-color: #b89060;
+}
+
+/* Competition — light cream, solid coffee border */
+.type-badge-competition {
+    background-color: #f5efe6;
+    color: #3c2f2f;
+    border-color: #6f4e37;
+}
+
+/* Fellowship — white fill, dashed coffee border */
+.type-badge-fellowship {
+    background-color: #ffffff;
+    color: #6f4e37;
+    border: 1.5px dashed #6f4e37;
+}
+
+/* Default fallback */
+.type-badge-default {
+    background-color: #eadecc;
+    color: #5a463a;
+    border-color: #d2b48c;
+}
+
+/* ── Deadline Badges ─────────────────────────────────────────────────────── */
+[class^="deadline-"] {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 10px;
+    font-weight: 700;
+    border: 1px solid transparent;
+}
+
+.deadline-none    { background-color: #f5efe6; color: #5a463a; border-color: #eadecc; }
+.deadline-expired { background-color: #fde8e8; color: #7f1d1d; border-color: #fca5a5; }
+.deadline-urgent  { background-color: #fee2e2; color: #991b1b; border-color: #f87171; }
+.deadline-soon    { background-color: #fef3c7; color: #78350f; border-color: #fcd34d; }
+.deadline-ok      { background-color: #f5efe6; color: #3c2f2f; border-color: #c8a882; }
