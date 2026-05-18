@@ -39,7 +39,7 @@ export const SiloLanding: React.FC = () => {
         {/* Call to Action: View Dashboard */}
         <div className="w-full flex justify-center">
           <a
-            href="http://localhost:8000"
+            href={import.meta.env.VITE_DASHBOARD_URL || "http://localhost:8000"}
             className="group relative w-full sm:w-auto px-10 py-5 rounded-2xl bg-[#3c2f2f] text-[#fdfbf7] font-bold text-lg sm:text-xl shadow-xl hover:shadow-2xl hover:bg-[#5a3d2a] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 border border-[#3c2f2f]/20"
           >
             <span>View Intelligence Dashboard</span>
