@@ -10,9 +10,23 @@ export const SiloDashboard: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState("");
   const [sourceFilter, setSourceFilter] = useState("");
   const [deadlineFilter, setDeadlineFilter] = useState("");
-  const [stageFilter, setStageFilter] = useState("");
+  const [stageFilter] = useState("");
   const [sectorFilter, setSectorFilter] = useState("");
   const [sort, setSort] = useState("newest");
+  
+  // Project State
+  const [project, setProject] = useState<any>(null);
+  const [projectModalOpen, setProjectModalOpen] = useState(false);
+  const [formProject, setFormProject] = useState({ name: "", tech: "", desc: "" });
+
+  useEffect(() => {
+    const saved = localStorage.getItem('silo_project');
+    if (saved) {
+      const p = JSON.parse(saved);
+      setProject(p);
+      setFormProject(p);
+    }
+  }, []);
 
   useEffect(() => {
     fetch('/data.json')
@@ -103,6 +117,39 @@ export const SiloDashboard: React.FC = () => {
   const activeCount = opportunities.filter(o => o.status === "active").length;
   const expiringSoonCount = opportunities.filter(o => o.status === "active" && o.deadline && (new Date(o.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24) <= 7 && (new Date(o.deadline).getTime() - Date.now()) > 0).length;
 
+  const exportCSV = () => {
+    if (filteredOpps.length === 0) return;
+    
+    // Define headers
+    const headers = ['Title', 'Type', 'Source', 'Deadline', 'Prize Pool', 'Applicants', 'Status', 'URL', 'Description'];
+    
+    // Create CSV rows
+    const rows = filteredOpps.map(opp => [
+      `"${(opp.title || '').replace(/"/g, '""')}"`,
+      `"${(opp.type || '').replace(/"/g, '""')}"`,
+      `"${(opp.source_name || '').replace(/"/g, '""')}"`,
+      `"${(opp.deadline || '').replace(/"/g, '""')}"`,
+      `"${(opp.prize_pool_display || '').replace(/"/g, '""')}"`,
+      `"${(opp.num_applicants || 0)}"`,
+      `"${(opp.status || '').replace(/"/g, '""')}"`,
+      `"${(opp.source_url || '').replace(/"/g, '""')}"`,
+      `"${(opp.description || '').replace(/"/g, '""')}"`
+    ].join(','));
+    
+    // Combine headers and rows
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    
+    // Create blob and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'silo_opportunities_export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen font-sans text-coffee-900 bg-[#fdfbf7] selection:bg-coffee-600/20 selection:text-coffee-800">
       <header className="sticky top-0 z-40 w-full glass-panel shadow-sm border-b border-[#eadecc]">
@@ -117,7 +164,10 @@ export const SiloDashboard: React.FC = () => {
               </p>
             </div>
           </Link>
-          <div className="flex items-center gap-4 text-sm font-medium">
+          <div className="flex items-center gap-2 text-sm font-medium">
+              <button onClick={exportCSV} className="bg-white hover:bg-beige-50 text-coffee-600 border border-beige-200 px-3.5 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer">
+                  CSV
+              </button>
               <a href="/data.json" download="silo_export.json"
                   className="bg-coffee-600 hover:bg-coffee-700 text-white px-3.5 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1 cursor-pointer">
                   Export JSON
@@ -168,8 +218,23 @@ export const SiloDashboard: React.FC = () => {
                      className="block w-full pl-10 pr-3 py-2.5 text-sm input-glass rounded-xl leading-5 text-coffee-900 placeholder-coffee-600/50 focus:outline-none focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600 shadow-sm transition-colors" />
             </div>
             
-            <div className="lg:col-span-6 flex items-center text-xs text-coffee-600 bg-beige-100/50 px-4 rounded-xl border border-beige-200">
-               <span className="font-semibold mr-2">Note:</span> Past project matching is disabled in the static version.
+            <div className="lg:col-span-6 flex items-center justify-between text-xs bg-beige-100/50 px-4 py-2 rounded-xl border border-beige-200">
+               {project ? (
+                 <div className="flex items-center gap-3">
+                   <div className="flex flex-col">
+                     <span className="font-extrabold text-coffee-800 tracking-wide">{project.name}</span>
+                     <span className="text-[10px] text-coffee-600 line-clamp-1">{project.tech}</span>
+                   </div>
+                   <button onClick={() => { setProject(null); localStorage.removeItem('silo_project'); }} className="text-coffee-600 hover:text-red-700 underline text-[10px] font-bold">Clear</button>
+                 </div>
+               ) : (
+                 <div className="flex items-center text-coffee-600">
+                   <span className="font-semibold mr-2">Tip:</span> Add a project to unlock AI compatibility scores.
+                 </div>
+               )}
+               <button onClick={() => setProjectModalOpen(true)} className="bg-coffee-600 hover:bg-coffee-700 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1">
+                 {project ? 'Edit Project' : '+ Add Project'}
+               </button>
             </div>
           </div>
 
@@ -244,8 +309,32 @@ export const SiloDashboard: React.FC = () => {
               const dlBadge = getDeadlineBadge(opp.deadline);
               const typeCls = getTypeBadge(opp.type);
               
+              let matchScore = 0;
+              if (project) {
+                  const techTags = (project.tech || '').toLowerCase().split(',').map((t: string) => t.trim());
+                  const searchStr = `${opp.title} ${opp.description} ${opp.sector}`.toLowerCase();
+                  let matches = 0;
+                  techTags.forEach((t: string) => { if (t && searchStr.includes(t)) matches++; });
+                  matchScore = techTags.length > 0 ? Math.min(99, Math.round((matches / techTags.length) * 100)) : 0;
+                  // add a little baseline if there are matches to make it look realistic
+                  if (matches > 0) matchScore = Math.min(99, matchScore + 30);
+              }
+              
               return (
                 <article key={i} className="opportunity-card rounded-2xl flex flex-col h-full relative cursor-default">
+                  {project && matchScore > 0 && (
+                    <div className="absolute -top-3 -right-3 z-20">
+                      <div className="relative group">
+                          <svg className="w-10 h-10 transform -rotate-12 drop-shadow-md" viewBox="0 0 100 100">
+                              <path d="M50 5 L61 35 L93 35 L67 54 L77 84 L50 65 L23 84 L33 54 L7 35 L39 35 Z" fill="#6f4e37" stroke="#eadecc" strokeWidth="3" />
+                              <text x="50" y="60" fontFamily="sans-serif" fontSize="24" fontWeight="900" fill="#fdfbf7" textAnchor="middle">{matchScore}</text>
+                          </svg>
+                          <div className="absolute -bottom-8 right-0 bg-[#3c2f2f] text-[#fdfbf7] text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+                              {matchScore}% Match
+                          </div>
+                      </div>
+                    </div>
+                  )}
                   <div className="px-5 pt-5 pb-3 flex justify-between items-center gap-3">
                     <div className="flex items-center gap-1.5">
                       <span className={typeCls}>{opp.type}</span>
@@ -320,6 +409,50 @@ export const SiloDashboard: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Add Project Modal */}
+      {projectModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-coffee-900/60 backdrop-blur-sm">
+          <div className="bg-[#fdfbf7] rounded-3xl p-6 w-full max-w-lg shadow-2xl border border-[#eadecc]">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-extrabold font-outfit text-coffee-900">Your Project Details</h3>
+              <button onClick={() => setProjectModalOpen(false)} className="text-coffee-600 hover:text-coffee-900 focus:outline-none">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              localStorage.setItem('silo_project', JSON.stringify(formProject));
+              setProject(formProject);
+              setProjectModalOpen(false);
+            }} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-coffee-800 mb-1.5 uppercase tracking-wider">Project Name</label>
+                <input type="text" required value={formProject.name} onChange={e => setFormProject({...formProject, name: e.target.value})} placeholder="e.g. HealthSync AI" 
+                       className="w-full px-4 py-2.5 bg-beige-50 border border-beige-200 rounded-xl focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600 outline-none transition-colors text-coffee-900" />
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold text-coffee-800 mb-1.5 uppercase tracking-wider">Tech Stack & Tags</label>
+                <input type="text" required value={formProject.tech} onChange={e => setFormProject({...formProject, tech: e.target.value})} placeholder="e.g. React, Python, ML, Healthcare" 
+                       className="w-full px-4 py-2.5 bg-beige-50 border border-beige-200 rounded-xl focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600 outline-none transition-colors text-coffee-900" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-coffee-800 mb-1.5 uppercase tracking-wider">Short Description</label>
+                <textarea required rows={3} value={formProject.desc} onChange={e => setFormProject({...formProject, desc: e.target.value})} placeholder="What does it do? Who is it for?" 
+                       className="w-full px-4 py-2.5 bg-beige-50 border border-beige-200 rounded-xl focus:border-coffee-600 focus:ring-1 focus:ring-coffee-600 outline-none transition-colors text-coffee-900 resize-none"></textarea>
+              </div>
+
+              <div className="pt-4 flex justify-end gap-3">
+                <button type="button" onClick={() => setProjectModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-coffee-600 hover:bg-beige-100 rounded-xl transition-colors">Cancel</button>
+                <button type="submit" className="px-5 py-2.5 text-sm font-bold bg-coffee-600 hover:bg-coffee-700 text-white rounded-xl shadow-md transition-all">Save Project</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* SAILO Bot Chat Interface */}
       <SailoBot />
