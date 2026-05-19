@@ -1,72 +1,40 @@
 # SILO: Startup Intelligence for Launch and Outreach
 
-SILO (Startup Intelligence for Launch and Outreach) is a comprehensive startup enablement platform designed to bridge the gap between initial ideation and successful execution. The journey begins with competitive hackathons, which provide real-world problem statements and pressure-tested challenges. From there, founders ideate and prototype solutions, refining their product-market fit. SILO then streamlines the transition from a successful prototype to a registered company, helping founders navigate structural entity decisions, secure government and private grants, and prepare structured pitching milestones.
+SILO is a comprehensive startup enablement platform designed to help builders transition their hackathon prototypes into registered companies. It automates opportunity discovery, matches portfolios with funding options, and provides structured startup guidance.
+
+Deployed Live Site: https://silo-web.vercel.app (or your custom Vercel deployment link)
 
 ---
 
-## Tech Stack
+## Architecture Overview
 
-The workspace is structured into a fast backend opportunity engine and a high-performance modern frontend landing page.
+SILO has been refactored into a fully serverless, zero-maintenance static architecture:
 
-### 1. Backend Opportunity Aggregator (launchradar)
-* Core Framework: FastAPI (Python 3.13)
-* Web Server: Uvicorn
-* Database Layer: SQLite via SQLAlchemy (asyncio) and aiosqlite
-* Scraper Suite: Async crawlers powered by Playwright, HTTPX, BeautifulSoup4, and lxml
-* Scheduling: APScheduler for automated, periodic background scraping
-* Templating: Jinja2 for server-side HTML rendering
-* Interactivity: Alpine.js for lightweight, reactive dashboard operations
-
-### 2. Landing Page Frontend (silo-web)
-* Core Framework: React 19
-* Build Tool: Vite
-* Language: TypeScript
-* Styling: Tailwind CSS and Vanilla CSS custom properties for hardware-accelerated animations
+1. **Frontend (React 19, Vite, TypeScript, Tailwind v4)**: A high-performance, single-page application styled with a premium glassmorphic beige-and-coffee theme. It fetches static opportunity data directly from the edge network.
+2. **AI Companion (Vercel Serverless)**: SAILO Bot runs as a serverless Python function (located in `silo-web/api/sailo-bot.py`) that processes startup queries and analyzes project fit without exposing API keys.
+3. **Scraper Pipeline (GitHub Actions)**: A Python pipeline (located in `launchradar/`) runs daily at midnight UTC inside GitHub Actions. It scrapes 8 platforms using Playwright, tags metadata with Google Gemini, deduplicates records, and commits the fresh dataset directly to the frontend.
 
 ---
 
-## Core Workflow
+## Key Features
 
-### 1. Opportunity Harvesting
-The system runs background async crawler tasks that target top developer networks, government portals, and challenge boards. It gathers full descriptions, prize pools, eligibility metrics, and exact deadlines.
-
-### 2. Standardization and Deduplication
-A robust pipeline processes all ingested records, parsing deadlines, standardizing reward tiers, and deduplicating entries by URL or date rules. Expired opportunities are marked and filtered automatically.
-
-### 3. Entity and Grant Advisory (SAILO Bot)
-An integrated startup mentor assistant is served via the dashboard. It guides founders who have developed a successful hackathon prototype through:
-* Selecting appropriate company structures (Private Limited vs. LLP)
-* Applying for DPIIT startup recognition and tax holiday eligibility
-* Navigating government grant applications (such as MSME schemes)
-* Structuring pitch decks and funding projections
-
-### 4. Matching Engine
-Founders can link past project profiles against the active database of challenges, hackathons, and corporate grants to identify the best matching avenues for launch.
+* **Multi-Source Aggregator**: Collects startup programs, grants, and hackathons across 8 major platforms (Devpost, Devfolio, Unstop, Hack2Skill, F6S, Eventbrite, Graham and Walker, and MassChallenge).
+* **Gemini AI Classification**: Analyzes opportunities to tag metadata such as funding stage, eligibility, and industry sectors.
+* **Past Projects Compatibility Engine**: Matches user portfolios against active opportunities using AI to generate suitability scorecards.
+* **Smart Deduplication**: Utilizes URL checks and fuzzy title matching (via RapidFuzz) to prevent duplicate records.
+* **Data Export**: Exporters for both filtered views and complete databases into fully structured CSV or JSON files.
+* **Email Alert System**: Allows users to set email alerts 1 day before deadlines.
 
 ---
 
 ## Local Setup
 
-### Prerequisite Checklist
-* Python 3.12 or newer
+### Prerequisites
 * Node.js v18 or newer
-* npm package manager
+* Python 3.12 or newer
 
-### 1. Running the FastAPI Backend
-Initialize your virtual environment, install dependencies, and start the development server:
-
-```bash
-cd launchradar
-python -m venv venv
-source venv/Scripts/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python -m uvicorn main:app --host 127.0.0.1 --port 8000 --reload
-```
-
-The FastAPI dashboard will be active at: http://localhost:8000/
-
-### 2. Running the React Frontend
-Install dependencies and run the Vite development server:
+### 1. Run the Frontend Dashboard
+Navigate to the frontend directory, install dependencies, and run the development server:
 
 ```bash
 cd silo-web
@@ -74,19 +42,29 @@ npm install
 npm run dev
 ```
 
-The SILO React landing page will be active at: http://localhost:5173/
+The app will be active at: http://localhost:5173/
+
+### 2. Test the Scraper Pipeline Locally
+Initialize your virtual environment, install requirements, and run a manual scrape:
+
+```bash
+cd launchradar
+python -m venv venv
+source venv/Scripts/activate  # On Windows use: venv\Scripts\activate
+pip install -r requirements.txt
+playwright install chromium
+python pipeline.py
+```
 
 ---
 
-## Project Structure
+## Deployment Configuration
 
-```text
-├── components/           # Reusable React components
-├── launchradar/          # FastAPI aggregator application
-│   ├── scrapers/         # Async crawler scripts (MSME, Devfolio, Unstop, etc.)
-│   ├── static/           # CSS stylesheets and client scripts
-│   ├── templates/        # Jinja2 dashboard templates
-│   ├── tests/            # Automated pytest suite
-│   └── main.py           # Application entry point
-└── silo-web/             # Vite React landing page application
-```
+### 1. Frontend & Serverless APIs (Vercel)
+* Connect your repository to Vercel.
+* Set the build directory or root to `silo-web`.
+* Add `GEMINI_API_KEY` to your Vercel Environment Variables so SAILO Bot can answer questions.
+
+### 2. Scraper Automation (GitHub Actions)
+* The workflow is defined in `.github/workflows/scraper.yml`.
+* Add `GEMINI_API_KEY` to your GitHub Repository Secrets to allow the daily scraper run to tag records.
