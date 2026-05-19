@@ -18,6 +18,7 @@ export const SiloDashboard: React.FC = () => {
   const [project, setProject] = useState<any>(null);
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [formProject, setFormProject] = useState({ name: "", tech: "", desc: "" });
+  const [filterByCompatibility, setFilterByCompatibility] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('silo_project');
@@ -81,6 +82,14 @@ export const SiloDashboard: React.FC = () => {
     if (stageFilter) result = result.filter(o => o.startup_stage === stageFilter);
     if (sectorFilter) result = result.filter(o => o.sector === sectorFilter);
 
+    if (filterByCompatibility && project) {
+      const techTags = (project.tech || '').toLowerCase().split(',').map((t: string) => t.trim()).filter(Boolean);
+      result = result.filter(o => {
+        const searchStr = `${o.title} ${o.description} ${o.sector}`.toLowerCase();
+        return techTags.some((t: string) => searchStr.includes(t));
+      });
+    }
+
     if (deadlineFilter) {
       const today = new Date();
       result = result.filter(o => {
@@ -112,7 +121,7 @@ export const SiloDashboard: React.FC = () => {
     });
 
     return result;
-  }, [opportunities, q, typeFilter, sourceFilter, deadlineFilter, stageFilter, sectorFilter, sort]);
+  }, [opportunities, q, typeFilter, sourceFilter, deadlineFilter, stageFilter, sectorFilter, sort, project, filterByCompatibility]);
 
   const activeCount = opportunities.filter(o => o.status === "active").length;
   const expiringSoonCount = opportunities.filter(o => o.status === "active" && o.deadline && (new Date(o.deadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24) <= 7 && (new Date(o.deadline).getTime() - Date.now()) > 0).length;
@@ -225,11 +234,17 @@ export const SiloDashboard: React.FC = () => {
                      <span className="font-extrabold text-coffee-800 tracking-wide">{project.name}</span>
                      <span className="text-[10px] text-coffee-600 line-clamp-1">{project.tech}</span>
                    </div>
-                   <button onClick={() => { setProject(null); localStorage.removeItem('silo_project'); }} className="text-coffee-600 hover:text-red-700 underline text-[10px] font-bold">Clear</button>
+                   <div className="flex items-center gap-2 ml-2 border-l border-beige-300 pl-3">
+                     <button onClick={() => setFilterByCompatibility(!filterByCompatibility)} 
+                             className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${filterByCompatibility ? 'bg-coffee-600 text-white shadow-sm' : 'bg-white hover:bg-beige-50 text-coffee-600 border border-beige-200'}`}>
+                       {filterByCompatibility ? '✓ Showing Compatible' : 'Match Compatibility'}
+                     </button>
+                     <button onClick={() => { setProject(null); setFilterByCompatibility(false); localStorage.removeItem('silo_project'); }} className="text-coffee-600 hover:text-red-700 underline text-[10px] font-bold">Clear</button>
+                   </div>
                  </div>
                ) : (
                  <div className="flex items-center text-coffee-600">
-                   <span className="font-semibold mr-2">Tip:</span> Add a project to unlock AI compatibility scores.
+                   <span className="font-semibold mr-2">Tip:</span> Add your project domains to match compatible opportunities.
                  </div>
                )}
                <button onClick={() => setProjectModalOpen(true)} className="bg-coffee-600 hover:bg-coffee-700 text-white font-bold px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1">
@@ -309,22 +324,8 @@ export const SiloDashboard: React.FC = () => {
               const dlBadge = getDeadlineBadge(opp.deadline);
               const typeCls = getTypeBadge(opp.type);
               
-              let matchScore = 0;
-              let hasMatch = false;
-              if (project) {
-                  const techTags = (project.tech || '').toLowerCase().split(',').map((t: string) => t.trim());
-                  const searchStr = `${opp.title} ${opp.description} ${opp.sector}`.toLowerCase();
-                  let matches = 0;
-                  techTags.forEach((t: string) => { if (t && searchStr.includes(t)) matches++; });
-                  matchScore = techTags.length > 0 ? Math.min(99, Math.round((matches / techTags.length) * 100)) : 0;
-                  if (matches > 0) {
-                      matchScore = Math.min(99, matchScore + 30);
-                      hasMatch = true;
-                  }
-              }
-              
               return (
-                <OpportunityCard key={i} opp={opp} dlBadge={dlBadge} typeCls={typeCls} project={project} matchScore={matchScore} hasMatch={hasMatch} />
+                <OpportunityCard key={i} opp={opp} dlBadge={dlBadge} typeCls={typeCls} />
               );
             })}
           </div>
@@ -381,13 +382,10 @@ export const SiloDashboard: React.FC = () => {
   );
 };
 
-const OpportunityCard: React.FC<{ opp: any; dlBadge: any; typeCls: string; project: any; matchScore: number; hasMatch: boolean }> = ({
+const OpportunityCard: React.FC<{ opp: any; dlBadge: any; typeCls: string }> = ({
   opp,
   dlBadge,
-  typeCls,
-  project,
-  matchScore,
-  hasMatch
+  typeCls
 }) => {
   const [showReminder, setShowReminder] = useState(false);
   const [email, setEmail] = useState("");
@@ -437,25 +435,6 @@ const OpportunityCard: React.FC<{ opp: any; dlBadge: any; typeCls: string; proje
 
   return (
     <article className="opportunity-card rounded-2xl flex flex-col h-full relative cursor-default">
-      {project && (
-        <div className="absolute -top-3 -right-3 z-20">
-          <div className="relative group">
-            {hasMatch ? (
-              <svg className="w-10 h-10 transform -rotate-12 drop-shadow-md" viewBox="0 0 100 100">
-                <path d="M50 5 L61 35 L93 35 L67 54 L77 84 L50 65 L23 84 L33 54 L7 35 L39 35 Z" fill="#6f4e37" stroke="#eadecc" strokeWidth="3" />
-                <text x="50" y="60" fontFamily="sans-serif" fontSize="24" fontWeight="900" fill="#fdfbf7" textAnchor="middle">{matchScore}</text>
-              </svg>
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-beige-200 border border-beige-300 flex items-center justify-center font-bold text-coffee-600 text-[10px] transform -rotate-12 drop-shadow-md">
-                0%
-              </div>
-            )}
-            <div className="absolute -bottom-8 right-0 bg-[#3c2f2f] text-[#fdfbf7] text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity font-bold">
-              {hasMatch ? `${matchScore}% Match` : 'No Keyword Match'}
-            </div>
-          </div>
-        </div>
-      )}
       
       <div className="px-5 pt-5 pb-3 flex justify-between items-center gap-3">
         <div className="flex items-center gap-1.5">
