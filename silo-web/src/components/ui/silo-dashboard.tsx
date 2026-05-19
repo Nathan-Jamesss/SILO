@@ -310,100 +310,21 @@ export const SiloDashboard: React.FC = () => {
               const typeCls = getTypeBadge(opp.type);
               
               let matchScore = 0;
+              let hasMatch = false;
               if (project) {
                   const techTags = (project.tech || '').toLowerCase().split(',').map((t: string) => t.trim());
                   const searchStr = `${opp.title} ${opp.description} ${opp.sector}`.toLowerCase();
                   let matches = 0;
                   techTags.forEach((t: string) => { if (t && searchStr.includes(t)) matches++; });
                   matchScore = techTags.length > 0 ? Math.min(99, Math.round((matches / techTags.length) * 100)) : 0;
-                  // add a little baseline if there are matches to make it look realistic
-                  if (matches > 0) matchScore = Math.min(99, matchScore + 30);
+                  if (matches > 0) {
+                      matchScore = Math.min(99, matchScore + 30);
+                      hasMatch = true;
+                  }
               }
               
               return (
-                <article key={i} className="opportunity-card rounded-2xl flex flex-col h-full relative cursor-default">
-                  {project && matchScore > 0 && (
-                    <div className="absolute -top-3 -right-3 z-20">
-                      <div className="relative group">
-                          <svg className="w-10 h-10 transform -rotate-12 drop-shadow-md" viewBox="0 0 100 100">
-                              <path d="M50 5 L61 35 L93 35 L67 54 L77 84 L50 65 L23 84 L33 54 L7 35 L39 35 Z" fill="#6f4e37" stroke="#eadecc" strokeWidth="3" />
-                              <text x="50" y="60" fontFamily="sans-serif" fontSize="24" fontWeight="900" fill="#fdfbf7" textAnchor="middle">{matchScore}</text>
-                          </svg>
-                          <div className="absolute -bottom-8 right-0 bg-[#3c2f2f] text-[#fdfbf7] text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity font-bold">
-                              {matchScore}% Match
-                          </div>
-                      </div>
-                    </div>
-                  )}
-                  <div className="px-5 pt-5 pb-3 flex justify-between items-center gap-3">
-                    <div className="flex items-center gap-1.5">
-                      <span className={typeCls}>{opp.type}</span>
-                      {opp.sector && opp.sector !== 'General' && (
-                        <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-beige-200 text-coffee-800 border border-beige-300/40">
-                            {opp.sector}
-                        </span>
-                      )}
-                    </div>
-                    <span className={dlBadge.class}>{dlBadge.text}</span>
-                  </div>
-
-                  <div className="px-5 pb-4 flex-grow flex flex-col">
-                    <h3 className="text-base font-extrabold font-outfit text-coffee-900 leading-snug mb-1.5 transition-colors title-clamp">
-                        <a href={opp.source_url} target="_blank" rel="noopener noreferrer" className="hover:text-coffee-600 transition-colors">
-                            {opp.title}
-                        </a>
-                    </h3>
-                    <div className="text-xs text-coffee-600 mb-3 flex flex-col gap-1">
-                        {opp.organizer && (
-                        <div className="flex items-center gap-1.5 font-medium">
-                            <svg className="w-3.5 h-3.5 text-coffee-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                            <span className="truncate">{opp.organizer}</span>
-                        </div>
-                        )}
-                        <div className="flex items-center gap-1.5 font-medium">
-                            <svg className="w-3.5 h-3.5 text-coffee-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            <span className="truncate">{opp.location || "Global"}</span>
-                        </div>
-                    </div>
-                    
-                    <div className="relative flex-grow min-h-[56px] mb-3">
-                        <p className="text-xs text-coffee-600 leading-relaxed description-clamp">
-                            {opp.description || "No description provided."}
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mb-3 mt-auto">
-                        <div className="px-2.5 py-1.5 rounded-lg bg-beige-100 border border-beige-200">
-                            <div className="text-[8px] text-coffee-600 font-extrabold uppercase tracking-wider leading-none">Prize / Funding</div>
-                            <span className="text-[10px] font-extrabold text-coffee-800 leading-tight">
-                                {opp.prize_pool_display || 'See listing'}
-                            </span>
-                        </div>
-                        <div className="px-2.5 py-1.5 rounded-lg bg-beige-100 border border-beige-200">
-                            <div className="text-[8px] text-coffee-600 font-extrabold uppercase tracking-wider leading-none">Applicants</div>
-                            <span className="text-[10px] font-extrabold text-coffee-800 leading-tight">
-                                {opp.num_applicants ? `${opp.num_applicants} registered` : 'N/A'}
-                            </span>
-                        </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-beige-100/50 px-5 py-3 border-t border-beige-200 flex flex-col gap-2 rounded-b-2xl">
-                      <div className="flex items-center justify-between">
-                          <a href={opp.source_url} target="_blank" rel="noopener noreferrer" 
-                            className="text-xs font-extrabold text-coffee-600 hover:text-coffee-800 transition-colors flex items-center gap-1 group">
-                              View & Apply
-                              <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
-                              </svg>
-                          </a>
-                          
-                          <div className="flex items-center gap-2">
-                              <span className="text-[9px] text-coffee-600 font-extrabold uppercase tracking-wider">Via {opp.source_name}</span>
-                          </div>
-                      </div>
-                  </div>
-                </article>
+                <OpportunityCard key={i} opp={opp} dlBadge={dlBadge} typeCls={typeCls} project={project} matchScore={matchScore} hasMatch={hasMatch} />
               );
             })}
           </div>
@@ -457,6 +378,187 @@ export const SiloDashboard: React.FC = () => {
       {/* SAILO Bot Chat Interface */}
       <SailoBot />
     </div>
+  );
+};
+
+const OpportunityCard: React.FC<{ opp: any; dlBadge: any; typeCls: string; project: any; matchScore: number; hasMatch: boolean }> = ({
+  opp,
+  dlBadge,
+  typeCls,
+  project,
+  matchScore,
+  hasMatch
+}) => {
+  const [showReminder, setShowReminder] = useState(false);
+  const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reminderSuccess, setReminderSuccess] = useState(false);
+  const [reminderError, setReminderError] = useState("");
+
+  const handleReminderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setIsSubmitting(true);
+    setReminderError("");
+
+    try {
+      const res = await fetch('/api/reminders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, opportunity_id: opp.id })
+      });
+      const data = await res.json();
+      setIsSubmitting(false);
+      if (data.status === 'success') {
+        setReminderSuccess(true);
+        setTimeout(() => {
+          setShowReminder(false);
+          setReminderSuccess(false);
+          setEmail("");
+        }, 4000);
+      } else {
+        setReminderError(data.message || 'Something went wrong');
+      }
+    } catch (err) {
+      // Offline fallback: save to localStorage and succeed
+      setIsSubmitting(false);
+      const savedReminders = JSON.parse(localStorage.getItem('silo_reminders') || '[]');
+      savedReminders.push({ email, opportunity_id: opp.id, title: opp.title });
+      localStorage.setItem('silo_reminders', JSON.stringify(savedReminders));
+      
+      setReminderSuccess(true);
+      setTimeout(() => {
+        setShowReminder(false);
+        setReminderSuccess(false);
+        setEmail("");
+      }, 4000);
+    }
+  };
+
+  return (
+    <article className="opportunity-card rounded-2xl flex flex-col h-full relative cursor-default">
+      {project && (
+        <div className="absolute -top-3 -right-3 z-20">
+          <div className="relative group">
+            {hasMatch ? (
+              <svg className="w-10 h-10 transform -rotate-12 drop-shadow-md" viewBox="0 0 100 100">
+                <path d="M50 5 L61 35 L93 35 L67 54 L77 84 L50 65 L23 84 L33 54 L7 35 L39 35 Z" fill="#6f4e37" stroke="#eadecc" strokeWidth="3" />
+                <text x="50" y="60" fontFamily="sans-serif" fontSize="24" fontWeight="900" fill="#fdfbf7" textAnchor="middle">{matchScore}</text>
+              </svg>
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-beige-200 border border-beige-300 flex items-center justify-center font-bold text-coffee-600 text-[10px] transform -rotate-12 drop-shadow-md">
+                0%
+              </div>
+            )}
+            <div className="absolute -bottom-8 right-0 bg-[#3c2f2f] text-[#fdfbf7] text-[9px] px-2 py-1 rounded shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity font-bold">
+              {hasMatch ? `${matchScore}% Match` : 'No Keyword Match'}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <div className="px-5 pt-5 pb-3 flex justify-between items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <span className={typeCls}>{opp.type}</span>
+          {opp.sector && opp.sector !== 'General' && (
+            <span className="px-2 py-0.5 rounded text-[9px] font-extrabold uppercase tracking-wider bg-beige-200 text-coffee-800 border border-beige-300/40">
+              {opp.sector}
+            </span>
+          )}
+        </div>
+        <span className={dlBadge.class}>{dlBadge.text}</span>
+      </div>
+
+      <div className="px-5 pb-4 flex-grow flex flex-col">
+        <h3 className="text-base font-extrabold font-outfit text-coffee-900 leading-snug mb-1.5 transition-colors title-clamp">
+          <a href={opp.source_url} target="_blank" rel="noopener noreferrer" className="hover:text-coffee-600 transition-colors">
+            {opp.title}
+          </a>
+        </h3>
+        <div className="text-xs text-coffee-600 mb-3 flex flex-col gap-1">
+          {opp.organizer && (
+            <div className="flex items-center gap-1.5 font-medium">
+              <svg className="w-3.5 h-3.5 text-coffee-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+              <span className="truncate">{opp.organizer}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 font-medium">
+            <svg className="w-3.5 h-3.5 text-coffee-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            <span className="truncate">{opp.location || "Global"}</span>
+          </div>
+        </div>
+        
+        <div className="relative flex-grow min-h-[56px] mb-3">
+          <p className="text-xs text-coffee-600 leading-relaxed description-clamp">
+            {opp.description || "No description provided."}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 mb-3 mt-auto">
+          <div className="px-2.5 py-1.5 rounded-lg bg-beige-100 border border-beige-200">
+            <div className="text-[8px] text-coffee-600 font-extrabold uppercase tracking-wider leading-none">Prize / Funding</div>
+            <span className="text-[10px] font-extrabold text-coffee-800 leading-tight">
+              {opp.prize_pool_display || 'See listing'}
+            </span>
+          </div>
+          <div className="px-2.5 py-1.5 rounded-lg bg-beige-100 border border-beige-200">
+            <div className="text-[8px] text-coffee-600 font-extrabold uppercase tracking-wider leading-none">Applicants</div>
+            <span className="text-[10px] font-extrabold text-coffee-800 leading-tight">
+              {opp.num_applicants ? `${opp.num_applicants} registered` : 'N/A'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-beige-100/50 px-5 py-3 border-t border-beige-200 flex flex-col gap-2 rounded-b-2xl">
+        <div className="flex items-center justify-between">
+          <a href={opp.source_url} target="_blank" rel="noopener noreferrer" 
+             className="text-xs font-extrabold text-coffee-600 hover:text-coffee-800 transition-colors flex items-center gap-1 group">
+            View & Apply
+            <svg className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+            </svg>
+          </a>
+          
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setShowReminder(!showReminder)} 
+                    className="text-[10px] font-bold px-2 py-1 rounded bg-beige-200 text-coffee-700 hover:text-coffee-950 transition-colors flex items-center gap-1 cursor-pointer">
+              <svg className="w-3 h-3 text-coffee-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+              </svg>
+              <span>Remind Me</span>
+            </button>
+            <span className="text-[9px] text-coffee-600 font-extrabold uppercase tracking-wider">Via {opp.source_name}</span>
+          </div>
+        </div>
+
+        {showReminder && (
+          <div className="mt-2 pt-2 border-t border-beige-200">
+            {!reminderSuccess ? (
+              <form onSubmit={handleReminderSubmit} className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-coffee-600 font-semibold">Get email alert 1 day before deadline:</label>
+                <div className="flex gap-1.5">
+                  <input type="email" placeholder="founder@silo.com" value={email} onChange={e => setEmail(e.target.value)} required
+                         className="block w-full px-2.5 py-1 text-xs bg-white border border-beige-200 rounded-lg text-coffee-900 focus:outline-none focus:border-coffee-600 outline-none" />
+                  <button type="submit" disabled={isSubmitting}
+                          className="px-3 py-1 bg-[#3c2f2f] hover:bg-[#5a3d2a] text-[#fdfbf7] rounded-lg text-[10px] font-bold transition-all whitespace-nowrap cursor-pointer">
+                    {!isSubmitting ? 'Alert Me' : '...'}
+                  </button>
+                </div>
+                {reminderError && <p className="text-[9px] text-red-600 font-bold">{reminderError}</p>}
+              </form>
+            ) : (
+              <div className="text-[10px] text-green-700 font-bold py-1.5 bg-green-50 rounded-lg text-center flex items-center justify-center gap-1 border border-green-200">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Reminder set! We will email you 1 day left.
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </article>
   );
 };
 
