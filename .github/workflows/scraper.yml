@@ -1,0 +1,48 @@
+name: Daily SILO Scraper and Data Export
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Run daily at midnight UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  scrape-and-export:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to commit changes
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          cd launchradar
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps chromium
+
+      - name: Run Scraper Pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          cd launchradar
+          python pipeline.py
+
+      - name: Export Static Data
+        run: |
+          python launchradar/export_static_data.py
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add silo-web/public/data.json
+          git commit -m "Automated data update from scraper pipeline" || echo "No changes to commit"
+          git push
