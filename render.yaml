@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: silo-backend
+    env: docker
+    repo: https://github.com/Nathan-Jamesss/SILO
+    rootDir: launchradar
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./data/soi.db
+      - key: GEMINI_API_KEY
+        sync: false
