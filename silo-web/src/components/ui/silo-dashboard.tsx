@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import opportunitiesData from '../../../public/data.json';
 
 export const SiloDashboard: React.FC = () => {
   const [opportunities, setOpportunities] = useState<any[]>([]);
@@ -30,16 +31,8 @@ export const SiloDashboard: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetch('/data.json')
-      .then(res => res.json())
-      .then(data => {
-        setOpportunities(data.opportunities || []);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("Failed to load data", err);
-        setLoading(false);
-      });
+    setOpportunities(opportunitiesData.opportunities || []);
+    setLoading(false);
   }, []);
 
   const getDeadlineBadge = (deadline: string | null) => {

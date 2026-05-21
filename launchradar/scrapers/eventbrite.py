@@ -12,6 +12,38 @@ from scrapers.base import BaseScraper
 API_BASE = "https://www.eventbriteapi.com/v3"
 
 
+EVENTBRITE_SEED = [
+    {
+        "title": "TechCrunch Disrupt 2026",
+        "description": "The ultimate startup conference where founders, investors, and builders gather. Focuses on tech trends, live pitch competitions, and networking.",
+        "source_url": "https://techcrunch.com/events/tc-disrupt-2026",
+        "organizer": "TechCrunch",
+        "location": "San Francisco, CA",
+    },
+    {
+        "title": "Web Summit 2026",
+        "description": "Join the founders, investors, and startup teams reshaping the global tech industry. Featuring multiple stages, startup showcase, and networking.",
+        "source_url": "https://websummit.com",
+        "organizer": "Web Summit",
+        "location": "Lisbon, Portugal",
+    },
+    {
+        "title": "Slush Startup Conference 2026",
+        "description": "The world's leading startup event in Helsinki. Connecting founders with top-tier VCs, angel investors, and tech leaders.",
+        "source_url": "https://slush.org",
+        "organizer": "Slush",
+        "location": "Helsinki, Finland",
+    },
+    {
+        "title": "SXSW 2026 Startup & Tech Track",
+        "description": "South by Southwest (SXSW) brings together interactive technology, startups, gaming, and innovation panels for builders.",
+        "source_url": "https://sxsw.com",
+        "organizer": "SXSW",
+        "location": "Austin, TX",
+    },
+]
+
+
 class EventbriteScraper(BaseScraper):
     """
     Fetches startup-related events from the Eventbrite REST API.
@@ -40,68 +72,67 @@ class EventbriteScraper(BaseScraper):
         Returns:
             List of opportunity dicts, or [] if API key missing
         """
-        if not settings.eventbrite_api_key:
-            logger.warning("[Eventbrite] EVENTBRITE_API_KEY not set — skipping")
-            return []
-
         results: list[dict] = []
-        continuation: Optional[str] = None
 
-        headers = {
-            "Authorization": f"Bearer {settings.eventbrite_api_key}",
-            "Accept": "application/json",
-        }
+        if settings.eventbrite_api_key:
+            continuation: Optional[str] = None
+            headers = {
+                "Authorization": f"Bearer {settings.eventbrite_api_key}",
+                "Accept": "application/json",
+            }
 
-        async with httpx.AsyncClient(headers=headers, timeout=20) as client:
-            for page_num in range(1, self.max_pages + 1):
-                params = {
-                    "q":          keyword,
-                    "categories": "102",          # Business & Professional
-                    "sort_by":    "date",
-                    "expand":     "organizer,venue",
-                    "page_size":  50,
-                }
-                if region:
-                    params["location.address"] = region
-                if continuation:
-                    params["continuation"] = continuation
+            async with httpx.AsyncClient(headers=headers, timeout=20) as client:
+                for page_num in range(1, self.max_pages + 1):
+                    params = {
+                        "q":          keyword,
+                        "categories": "102",          # Business & Professional
+                        "sort_by":    "date",
+                        "expand":     "organizer,venue",
+                        "page_size":  50,
+                    }
+                    if region:
+                        params["location.address"] = region
+                    if continuation:
+                        params["continuation"] = continuation
 
-                logger.info(f"[Eventbrite] Fetching page {page_num}")
+                    logger.info(f"[Eventbrite] Fetching page {page_num}")
 
-                try:
-                    response = await client.get(
-                        f"{API_BASE}/events/search/",
-                        params=params,
-                    )
-                    response.raise_for_status()
-                    data = response.json()
-                except httpx.HTTPStatusError as exc:
-                    logger.error(
-                        f"[Eventbrite] HTTP {exc.response.status_code} — stopping"
-                    )
-                    break
-                except Exception as exc:
-                    logger.error(f"[Eventbrite] Request failed: {exc}")
-                    break
-
-                events = data.get("events", [])
-                logger.info(f"[Eventbrite] Page {page_num}: {len(events)} events")
-
-                for event in events:
                     try:
-                        record = self._map_event(event)
-                        if record:
-                            results.append(record)
+                        response = await client.get(
+                            f"{API_BASE}/events/search/",
+                            params=params,
+                        )
+                        response.raise_for_status()
+                        data = response.json()
+                    except httpx.HTTPStatusError as exc:
+                        logger.error(
+                            f"[Eventbrite] HTTP {exc.response.status_code} — stopping"
+                        )
+                        break
                     except Exception as exc:
-                        logger.debug(f"[Eventbrite] Event parse error: {exc}")
+                        logger.error(f"[Eventbrite] Request failed: {exc}")
+                        break
 
-                # Check for next page
-                pagination = data.get("pagination", {})
-                continuation = pagination.get("continuation")
-                if not continuation or not pagination.get("has_more_items"):
-                    break
+                    events = data.get("events", [])
+                    logger.info(f"[Eventbrite] Page {page_num}: {len(events)} events")
 
-                await asyncio.sleep(1.0)   # polite delay between API calls
+                    for event in events:
+                        try:
+                            record = self._map_event(event)
+                            if record:
+                                results.append(record)
+                        except Exception as exc:
+                            logger.debug(f"[Eventbrite] Event parse error: {exc}")
+
+                    # Check for next page
+                    pagination = data.get("pagination", {})
+                    continuation = pagination.get("continuation")
+                    if not continuation or not pagination.get("has_more_items"):
+                        break
+
+                    await asyncio.sleep(1.0)   # polite delay between API calls
+        else:
+            logger.warning("[Eventbrite] EVENTBRITE_API_KEY not set — skipping live crawl")
 
         logger.info(f"[Eventbrite] Total extracted: {len(results)} events")
         return results
