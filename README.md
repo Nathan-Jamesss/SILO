@@ -2,7 +2,7 @@
 
 SILO is a comprehensive startup enablement platform designed to help builders transition their hackathon prototypes into registered companies. It automates opportunity discovery, matches portfolios with funding options, and provides structured startup guidance.
 
-Deployed Live Site: https://silo-web.vercel.app (or your custom Vercel deployment link)
+Deployed Live Site: https://silo-tau-lovat.vercel.app
 
 ---
 
